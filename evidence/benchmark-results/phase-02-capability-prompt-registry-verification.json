@@ -1,0 +1,189 @@
+{
+  "phase": "Phase 2",
+  "verification": "PASS",
+  "generated_at": "2026-07-12T19:18:43.271098+00:00",
+  "test_output": "...............                                                          [100%]\n=============================== warnings summary ===============================\n.venv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  /home/cloudlab/enterprise-analyst-ai-stack-lab/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+  "registry_verification": {
+    "capabilities": [
+      {
+        "id": "customer-churn-analysis",
+        "version": "1.0.0",
+        "status": "active",
+        "execution_profile": "churn-synthesis-v1",
+        "prompt_versions": {
+          "system": "analyst-core@v1",
+          "task": "churn-analysis@v1",
+          "verifier": "evidence-verifier@v1"
+        }
+      },
+      {
+        "id": "executive-summary",
+        "version": "1.0.0",
+        "status": "preview",
+        "execution_profile": "executive-summary-v1",
+        "prompt_versions": {
+          "system": "analyst-core@v1",
+          "task": "executive-summary@v1",
+          "verifier": "evidence-verifier@v1"
+        }
+      },
+      {
+        "id": "incident-trend-analysis",
+        "version": "1.0.0",
+        "status": "preview",
+        "execution_profile": "incident-trend-v1",
+        "prompt_versions": {
+          "system": "analyst-core@v1",
+          "task": "incident-trend-analysis@v1",
+          "verifier": "evidence-verifier@v1"
+        }
+      }
+    ],
+    "prompts": [
+      {
+        "id": "analyst-core",
+        "version": "v1",
+        "role": "system",
+        "status": "active"
+      },
+      {
+        "id": "churn-analysis",
+        "version": "v1",
+        "role": "task",
+        "status": "active"
+      },
+      {
+        "id": "evidence-verifier",
+        "version": "v1",
+        "role": "verifier",
+        "status": "active"
+      },
+      {
+        "id": "executive-summary",
+        "version": "v1",
+        "role": "task",
+        "status": "active"
+      },
+      {
+        "id": "incident-trend-analysis",
+        "version": "v1",
+        "role": "task",
+        "status": "active"
+      }
+    ]
+  },
+  "api_verification": {
+    "capability_count": 3,
+    "prompt_count": 5,
+    "analysis": {
+      "analysis_id": "ana_b277802b314c4927",
+      "trace_id": "trc_bb11a62f7468402d",
+      "status": "COMPLETED",
+      "capability_id": "customer-churn-analysis",
+      "tenant_id": "tenant-demo",
+      "workspace_id": "workspace-customer-intelligence",
+      "user_id": "analyst-001",
+      "query": "Explain why customer churn increased during Q2. Compare support incidents and product usage, then provide an evidence-backed executive summary.",
+      "summary": "Q2 churn increased from 5.1% to 7.8%. The strongest contributing signals were a 54.2% increase in support incidents and a 17.6% reduction in weekly active usage. The evidence indicates the greatest impact occurred in the mid-market segment following the April workflow migration. This conclusion is based exclusively on synthetic demonstration evidence.",
+      "findings": [
+        {
+          "statement": "Customer churn increased by 2.7 percentage points from Q1 to Q2.",
+          "confidence": 1.0,
+          "evidence_ids": [
+            "customer-churn-snapshot-2026-q2",
+            "query-customer-metrics-result"
+          ]
+        },
+        {
+          "statement": "Support incidents increased by 54.2%, creating a strong operational signal associated with the churn increase.",
+          "confidence": 0.98,
+          "evidence_ids": [
+            "customer-churn-snapshot-2026-q2",
+            "q2-support-summary"
+          ]
+        },
+        {
+          "statement": "Weekly active product usage declined by 17.6%, indicating reduced engagement during the same period.",
+          "confidence": 0.98,
+          "evidence_ids": [
+            "customer-churn-snapshot-2026-q2",
+            "q2-support-summary"
+          ]
+        },
+        {
+          "statement": "The highest-impact segment was mid-market, with incident concentration following the workflow migration.",
+          "confidence": 0.94,
+          "evidence_ids": [
+            "customer-churn-snapshot-2026-q2",
+            "q2-support-summary"
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "source_id": "customer-churn-snapshot-2026-q2",
+          "source_type": "structured-data",
+          "title": "Synthetic Customer Churn Snapshot",
+          "excerpt": "Q2 churn was 7.8%, up 2.7 percentage points. Support incidents increased 54.2%, while weekly active usage changed -17.6%.",
+          "relevance_score": 1.0
+        },
+        {
+          "source_id": "q2-support-summary",
+          "source_type": "document",
+          "title": "Q2 Synthetic Support Operations Summary",
+          "excerpt": "# Q2 Synthetic Support Operations Summary Classification: synthetic-internal Tenant: tenant-demo Owner: synthetic-support-operations During the second quarter, support incidents increased most sharply among mid-market accounts following the April product workflow migration. The largest incident categories were authentication failures, delayed data synchronization, and reporting timeouts. Accounts experiencing two or more support incidents showed lower weekly product usage during the same period.",
+          "relevance_score": 0.96
+        },
+        {
+          "source_id": "query-customer-metrics-result",
+          "source_type": "tool-result",
+          "title": "Customer Metrics Tool Result",
+          "excerpt": "Q2 churn was 7.8%, up 2.7 percentage points. Support incidents increased 54.2%, while weekly active usage changed -17.6%.",
+          "relevance_score": 1.0
+        }
+      ],
+      "policy_decision": {
+        "decision": "ALLOW",
+        "policy_id": "phase-01-read-only-demo-policy",
+        "reasons": [
+          "The request uses synthetic demonstration data.",
+          "The requested tool is read-only.",
+          "The tenant identifier matches the authorized demonstration tenant."
+        ]
+      },
+      "evaluation": {
+        "schema_valid": true,
+        "groundedness_score": 1.0,
+        "evidence_coverage_score": 1.0,
+        "policy_compliant": true,
+        "decision": "PASS"
+      },
+      "runtime": {
+        "execution_mode": "deterministic-simulation",
+        "context_strategy": "churn-standard-v1",
+        "tool_calls": 1,
+        "trace_event_count": 14
+      },
+      "created_at": "2026-07-12T19:18:43.268484Z"
+    },
+    "capability_trace_event": {
+      "sequence": 3,
+      "event_type": "capability.selected",
+      "timestamp": "2026-07-12T19:18:43.268319Z",
+      "details": {
+        "capability_id": "customer-churn-analysis",
+        "capability_version": "1.0.0",
+        "execution_profile": "churn-synthesis-v1",
+        "prompt_versions": {
+          "system": "analyst-core@v1",
+          "task": "churn-analysis@v1",
+          "verifier": "evidence-verifier@v1"
+        }
+      }
+    },
+    "preview_capability_control": {
+      "status_code": 422,
+      "detail": "Capability is not active: executive-summary [preview]"
+    }
+  }
+}

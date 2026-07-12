@@ -1,0 +1,9 @@
+api_version: analyst.securethecloud.dev/v1
+kind: PromptArtifact
+prompt_id: executive-summary
+version: v1
+role: task
+owner: analyst-platform-team
+description: Instructions for producing governed executive summaries.
+status: active
+content_file: v1.md

@@ -1,0 +1,9 @@
+api_version: analyst.securethecloud.dev/v1
+kind: PromptArtifact
+prompt_id: evidence-verifier
+version: v1
+role: verifier
+owner: analyst-platform-team
+description: Verification instructions for grounded analytical responses.
+status: active
+content_file: v1.md

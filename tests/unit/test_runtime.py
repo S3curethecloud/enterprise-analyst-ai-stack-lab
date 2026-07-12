@@ -41,7 +41,7 @@ def test_deterministic_runtime_produces_grounded_result() -> None:
 def test_runtime_rejects_unsupported_capability() -> None:
     runtime = DeterministicAnalystRuntime(store=AnalysisStore())
 
-    with pytest.raises(ValueError, match="Unsupported capability_id"):
+    with pytest.raises(ValueError, match="Capability not found"):
         asyncio.run(
             runtime.execute(
                 build_request(capability_id="unregistered-capability")

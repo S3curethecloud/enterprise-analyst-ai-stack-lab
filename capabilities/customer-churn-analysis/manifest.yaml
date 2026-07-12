@@ -1,0 +1,49 @@
+api_version: analyst.securethecloud.dev/v1
+kind: AnalystCapability
+
+metadata:
+  id: customer-churn-analysis
+  version: 1.0.0
+  owner: customer-intelligence-team
+  description: Analyze customer churn using approved metrics, support evidence, and usage data.
+  status: active
+
+spec:
+  task_types:
+    - churn_analysis
+    - trend_explanation
+
+  prompt_bundle:
+    system:
+      prompt_id: analyst-core
+      version: v1
+    task:
+      prompt_id: churn-analysis
+      version: v1
+    verifier:
+      prompt_id: evidence-verifier
+      version: v1
+
+  allowed_tools:
+    - query_customer_metrics
+    - retrieve_support_incidents
+    - retrieve_product_usage
+
+  context_policy: churn-standard-v1
+  memory_policy: workspace-isolated-v1
+  evaluation_suite: churn-analysis-v1
+  output_schema: schemas/churn-analysis-result-v1.json
+
+  runtime:
+    execution_profile: churn-synthesis-v1
+    maximum_tool_calls: 8
+    maximum_context_tokens: 12000
+    timeout_seconds: 45
+
+  risk:
+    classification: moderate
+    data_classes:
+      - synthetic-internal
+      - customer-confidential
+    approval_required_for:
+      - external_distribution
