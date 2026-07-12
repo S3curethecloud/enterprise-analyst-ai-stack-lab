@@ -8,6 +8,7 @@ The system separates product-specific analytical capabilities from the shared AI
 
 ## Logical Architecture
 
+```mermaid
 flowchart TB
     U[Analyst or Product Application]
 
@@ -132,6 +133,7 @@ flowchart TB
         R --> X[Context Engine] --> P[Policy Engine] --> T[Tool Gateway]
         T --> E[Evaluation Service] --> L[Evidence Service]
     end
+```
 
 sequenceDiagram
     participant A as Analyst
