@@ -197,7 +197,7 @@ The initial vertical slice is complete when the system can:
 
 ## 14. Current Status
 
-**Current phase:** Phase 2 — Capability and Prompt Registries
+**Current phase:** Phase 3 — Governed Retrieval and Context Engine
 
 **Runtime authority:** None
 
@@ -207,4 +207,4 @@ The initial vertical slice is complete when the system can:
 
 **Deployment status:** Not deployed
 
-**Implementation status:** Registry-driven capability and prompt resolution implemented; dynamic retrieval, governed memory, additional execution profiles, and external model integration remain pending
+**Implementation status:** Versioned context policies, governed source metadata, deterministic information-requirement planning, tenant and workspace isolation, classification filtering, ranking, deduplication, token budgeting, provenance-rich context packages, insufficient-evidence controls, and read-only discovery APIs are implemented. Governed tools and MCP interoperability, memory, expanded evaluation, runtime approval controls, and external model integration remain pending.

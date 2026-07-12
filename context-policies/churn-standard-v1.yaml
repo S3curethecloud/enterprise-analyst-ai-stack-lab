@@ -1,0 +1,17 @@
+api_version: analyst.securethecloud.dev/v1
+kind: ContextPolicy
+policy_id: churn-standard-v1
+mode: standard
+
+allowed_source_types:
+  - structured-data
+  - document
+
+candidate_limit: 10
+selected_limit: 5
+maximum_context_tokens: 5000
+minimum_relevance_score: 0.30
+minimum_sources: 2
+maximum_source_age_days: 730
+require_authoritative_source: true
+allow_expired_sources: false

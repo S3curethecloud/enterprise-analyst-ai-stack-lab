@@ -35,6 +35,16 @@ class EvidenceItem(BaseModel):
     excerpt: str
     relevance_score: float = Field(ge=0.0, le=1.0)
 
+    tenant_id: str | None = None
+    classification: str | None = None
+    authoritative: bool | None = None
+    updated_at: datetime | None = None
+    content_hash: str | None = None
+    citation_uri: str | None = None
+    matched_requirements: list[str] = Field(
+        default_factory=list
+    )
+
 
 class Finding(BaseModel):
     statement: str
@@ -69,6 +79,21 @@ class RuntimeMetadata(BaseModel):
     context_strategy: str
     tool_calls: int = Field(ge=0)
     trace_event_count: int = Field(ge=0)
+
+    context_package_id: str | None = None
+    retrieval_mode: str | None = None
+    retrieval_candidate_count: int = Field(
+        default=0,
+        ge=0,
+    )
+    retrieval_selected_count: int = Field(
+        default=0,
+        ge=0,
+    )
+    context_tokens: int = Field(
+        default=0,
+        ge=0,
+    )
 
 
 class AnalysisResult(BaseModel):

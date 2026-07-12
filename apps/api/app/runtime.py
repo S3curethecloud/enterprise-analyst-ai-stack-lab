@@ -4,6 +4,20 @@ import json
 from pathlib import Path
 from uuid import uuid4
 
+from apps.api.app.context_contracts import (
+    ContextDecision,
+    ContextItem,
+    ContextPackage,
+    RetrievalRequest,
+)
+from apps.api.app.context_engine import (
+    GovernedContextEngine,
+    InformationRequirementPlanner,
+)
+from apps.api.app.context_registry import (
+    ContextPolicyRegistry,
+    SourceCatalog,
+)
 from apps.api.app.contracts import (
     AnalysisRequest,
     AnalysisResult,
@@ -16,10 +30,14 @@ from apps.api.app.contracts import (
     TraceRecord,
 )
 from apps.api.app.registry import (
+    CapabilityManifest,
     CapabilityRegistry,
     PromptRegistry,
     RegistryItemNotFoundError,
     validate_registry_bindings,
+)
+from apps.api.app.retrieval_adapters import (
+    SourceDocumentLoader,
 )
 from apps.api.app.store import AnalysisStore
 from apps.api.app.tracing import TraceRecorder
@@ -32,6 +50,8 @@ class DeterministicAnalystRuntime:
         repository_root: Path | None = None,
         capability_registry: CapabilityRegistry | None = None,
         prompt_registry: PromptRegistry | None = None,
+        context_engine: GovernedContextEngine | None = None,
+        requirement_planner: InformationRequirementPlanner | None = None,
     ) -> None:
         self.store = store
         self.repository_root = (
@@ -56,6 +76,31 @@ class DeterministicAnalystRuntime:
         validate_registry_bindings(
             self.capability_registry,
             self.prompt_registry,
+        )
+
+        self.context_engine = (
+            context_engine
+            or GovernedContextEngine(
+                source_catalog=SourceCatalog(
+                    catalog_path=(
+                        self.repository_root
+                        / "data/metadata/sources.yaml"
+                    ),
+                    repository_root=self.repository_root,
+                ).load(),
+                policy_registry=ContextPolicyRegistry(
+                    self.repository_root
+                    / "context-policies"
+                ).load(),
+                source_loader=SourceDocumentLoader(
+                    self.repository_root
+                ),
+            )
+        )
+
+        self.requirement_planner = (
+            requirement_planner
+            or InformationRequirementPlanner()
         )
 
     async def execute(self, request: AnalysisRequest) -> AnalysisResult:
@@ -140,29 +185,92 @@ class DeterministicAnalystRuntime:
             },
         )
 
+        requirements = self.requirement_planner.plan(
+            query=request.query,
+            capability_id=capability.metadata.id,
+        )
+
+        retrieval_request = RetrievalRequest(
+            tenant_id=request.tenant_id,
+            workspace_id=request.workspace_id,
+            query=request.query,
+            capability_id=capability.metadata.id,
+            context_policy_id=capability.spec.context_policy,
+            allowed_classifications=(
+                capability.spec.risk.data_classes
+            ),
+            requirements=requirements,
+        )
+
         trace.add(
             "context.plan.created",
             {
                 "strategy": capability.spec.context_policy,
-                "required_sources": [
-                    "customer-churn-snapshot",
-                    "q2-support-summary",
+                "requirement_ids": [
+                    item.requirement_id
+                    for item in requirements
                 ],
+                "requirements": [
+                    item.model_dump(mode="json")
+                    for item in requirements
+                ],
+                "allowed_classifications": (
+                    retrieval_request.allowed_classifications
+                ),
             },
         )
 
-        metrics = self._load_metrics()
-        support_summary = self._load_support_summary()
+        context_package = self.context_engine.build_context(
+            retrieval_request
+        )
 
         trace.add(
             "retrieval.executed",
             {
+                "context_package_id": (
+                    context_package.package_id
+                ),
+                "decision": context_package.decision.value,
+                "retrieval_mode": (
+                    context_package.retrieval_mode.value
+                ),
+                "candidate_count": (
+                    context_package.candidate_count
+                ),
+                "selected_count": (
+                    context_package.selected_count
+                ),
+                "total_tokens": (
+                    context_package.total_tokens
+                ),
                 "retrieved_source_ids": [
-                    metrics["dataset_id"],
-                    "q2-support-summary",
+                    item.source_id
+                    for item in context_package.items
                 ],
-                "source_count": 2,
+                "covered_requirements": (
+                    context_package.covered_requirements
+                ),
+                "missing_requirements": (
+                    context_package.missing_requirements
+                ),
             },
+        )
+
+        if (
+            context_package.decision
+            == ContextDecision.RETURN_INSUFFICIENT_EVIDENCE
+        ):
+            return self._complete_insufficient_evidence(
+                analysis_id=analysis_id,
+                trace_id=trace_id,
+                trace=trace,
+                request=request,
+                capability=capability,
+                context_package=context_package,
+            )
+
+        metrics = self._extract_metrics(
+            context_package
         )
 
         trace.add(
@@ -170,16 +278,32 @@ class DeterministicAnalystRuntime:
             {
                 "tool_name": tool_name,
                 "side_effect": "none",
+                "context_package_id": (
+                    context_package.package_id
+                ),
             },
         )
 
         policy_decision = PolicyDecision(
             decision="ALLOW",
-            policy_id="phase-01-read-only-demo-policy",
+            policy_id=(
+                "phase-03-governed-retrieval-"
+                "read-only-tool-policy"
+            ),
             reasons=[
-                "The request uses synthetic demonstration data.",
+                (
+                    "The governed context engine returned "
+                    "sufficient authorized evidence."
+                ),
+                (
+                    "Selected sources match the request tenant, "
+                    "workspace, and allowed classifications."
+                ),
                 "The requested tool is read-only.",
-                "The tenant identifier matches the authorized demonstration tenant.",
+                (
+                    "The required tool is present in the "
+                    "capability allowlist."
+                ),
             ],
         )
 
@@ -194,17 +318,41 @@ class DeterministicAnalystRuntime:
                 "tool_name": tool_name,
                 "result_dataset_id": metrics["dataset_id"],
                 "status": "success",
+                "context_package_id": (
+                    context_package.package_id
+                ),
             },
         )
 
-        evidence = self._build_evidence(metrics, support_summary)
+        evidence = self._build_evidence(
+            context_package=context_package,
+            metrics=metrics,
+        )
 
         trace.add(
             "context.compiled",
             {
-                "evidence_ids": [item.source_id for item in evidence],
+                "context_package_id": (
+                    context_package.package_id
+                ),
+                "decision": context_package.decision.value,
+                "evidence_ids": [
+                    item.source_id
+                    for item in evidence
+                ],
                 "evidence_count": len(evidence),
-                "context_strategy": "phase-01-static-authorized-context",
+                "context_strategy": (
+                    capability.spec.context_policy
+                ),
+                "retrieval_mode": (
+                    context_package.retrieval_mode.value
+                ),
+                "context_tokens": (
+                    context_package.total_tokens
+                ),
+                "covered_requirements": (
+                    context_package.covered_requirements
+                ),
             },
         )
 
@@ -277,6 +425,21 @@ class DeterministicAnalystRuntime:
                 context_strategy=capability.spec.context_policy,
                 tool_calls=1,
                 trace_event_count=trace.event_count,
+                context_package_id=(
+                    context_package.package_id
+                ),
+                retrieval_mode=(
+                    context_package.retrieval_mode.value
+                ),
+                retrieval_candidate_count=(
+                    context_package.candidate_count
+                ),
+                retrieval_selected_count=(
+                    context_package.selected_count
+                ),
+                context_tokens=(
+                    context_package.total_tokens
+                ),
             ),
         )
 
@@ -286,53 +449,326 @@ class DeterministicAnalystRuntime:
 
         return result
 
-    def _load_metrics(self) -> dict:
-        path = self.repository_root / "data/structured/customer_churn_snapshot.json"
-        return json.loads(path.read_text(encoding="utf-8"))
-
-    def _load_support_summary(self) -> str:
-        path = self.repository_root / "data/documents/q2-support-summary.md"
-        return path.read_text(encoding="utf-8")
-
     @staticmethod
-    def _build_evidence(metrics: dict, support_summary: str) -> list[EvidenceItem]:
-        metric_values = metrics["metrics"]
+    def _extract_metrics(
+        context_package: ContextPackage,
+    ) -> dict:
+        for item in context_package.items:
+            payload = item.structured_payload
 
-        structured_excerpt = (
-            f"Q2 churn was {metric_values['churn_rate']['current_percent']}%, "
-            f"up {metric_values['churn_rate']['change_percentage_points']} percentage "
-            f"points. Support incidents increased "
-            f"{metric_values['support_incidents']['change_percent']}%, while weekly "
-            f"active usage changed "
-            f"{metric_values['weekly_active_usage']['change_percent']}%."
+            if not isinstance(payload, dict):
+                continue
+
+            if (
+                isinstance(payload.get("dataset_id"), str)
+                and isinstance(payload.get("metrics"), dict)
+            ):
+                return payload
+
+        raise ValueError(
+            "Required authoritative churn metrics were not "
+            "present in the governed context package."
         )
 
-        normalized_document = " ".join(support_summary.split())
-        document_excerpt = normalized_document[:500]
+    @staticmethod
+    def _metric_excerpt(metrics: dict) -> str:
+        values = metrics["metrics"]
 
+        return (
+            f"Q2 churn was "
+            f"{values['churn_rate']['current_percent']}%, "
+            f"up "
+            f"{values['churn_rate']['change_percentage_points']} "
+            f"percentage points. Support incidents increased "
+            f"{values['support_incidents']['change_percent']}%, "
+            f"while weekly active usage changed "
+            f"{values['weekly_active_usage']['change_percent']}%."
+        )
+
+    @staticmethod
+    def _context_item_to_evidence(
+        item: ContextItem,
+    ) -> EvidenceItem:
+        normalized_content = " ".join(
+            item.content.split()
+        )
+
+        return EvidenceItem(
+            source_id=item.source_id,
+            source_type=item.source_type.value,
+            title=item.title,
+            excerpt=normalized_content[:500],
+            relevance_score=item.relevance_score,
+            tenant_id=item.tenant_id,
+            classification=item.classification,
+            authoritative=item.authoritative,
+            updated_at=item.updated_at,
+            content_hash=item.content_hash,
+            citation_uri=item.citation_uri,
+            matched_requirements=(
+                item.matched_requirements
+            ),
+        )
+
+    @classmethod
+    def _build_retrieval_evidence(
+        cls,
+        context_package: ContextPackage,
+    ) -> list[EvidenceItem]:
         return [
-            EvidenceItem(
-                source_id=metrics["dataset_id"],
-                source_type="structured-data",
-                title="Synthetic Customer Churn Snapshot",
-                excerpt=structured_excerpt,
-                relevance_score=1.0,
+            cls._context_item_to_evidence(item)
+            for item in context_package.items
+        ]
+
+    @classmethod
+    def _build_evidence(
+        cls,
+        context_package: ContextPackage,
+        metrics: dict,
+    ) -> list[EvidenceItem]:
+        evidence = cls._build_retrieval_evidence(
+            context_package
+        )
+
+        metrics_dataset_id = metrics["dataset_id"]
+
+        metrics_item = next(
+            (
+                item
+                for item in context_package.items
+                if (
+                    isinstance(
+                        item.structured_payload,
+                        dict,
+                    )
+                    and item.structured_payload.get(
+                        "dataset_id"
+                    )
+                    == metrics_dataset_id
+                )
             ),
-            EvidenceItem(
-                source_id="q2-support-summary",
-                source_type="document",
-                title="Q2 Synthetic Support Operations Summary",
-                excerpt=document_excerpt,
-                relevance_score=0.96,
-            ),
+            None,
+        )
+
+        if metrics_item is None:
+            raise ValueError(
+                "The structured metrics source could not be "
+                "resolved from the governed context package."
+            )
+
+        evidence.append(
             EvidenceItem(
                 source_id="query-customer-metrics-result",
                 source_type="tool-result",
                 title="Customer Metrics Tool Result",
-                excerpt=structured_excerpt,
+                excerpt=cls._metric_excerpt(metrics),
                 relevance_score=1.0,
+                tenant_id=metrics_item.tenant_id,
+                classification=(
+                    metrics_item.classification
+                ),
+                authoritative=True,
+                updated_at=metrics_item.updated_at,
+                content_hash=metrics_item.content_hash,
+                citation_uri=(
+                    "urn:analyst-tool-result:"
+                    "query-customer-metrics"
+                ),
+                matched_requirements=[
+                    "churn-change",
+                    "support-signal",
+                    "usage-signal",
+                ],
+            )
+        )
+
+        return evidence
+
+    def _complete_insufficient_evidence(
+        self,
+        *,
+        analysis_id: str,
+        trace_id: str,
+        trace: TraceRecorder,
+        request: AnalysisRequest,
+        capability: CapabilityManifest,
+        context_package: ContextPackage,
+    ) -> AnalysisResult:
+        evidence = self._build_retrieval_evidence(
+            context_package
+        )
+
+        reasons = (
+            context_package.decision_reasons
+            or [
+                (
+                    "The governed context engine could not "
+                    "assemble sufficient authorized evidence."
+                )
+            ]
+        )
+
+        policy_decision = PolicyDecision(
+            decision="RETURN_INSUFFICIENT_EVIDENCE",
+            policy_id=capability.spec.context_policy,
+            reasons=reasons,
+        )
+
+        trace.add(
+            "context.compiled",
+            {
+                "context_package_id": (
+                    context_package.package_id
+                ),
+                "decision": (
+                    context_package.decision.value
+                ),
+                "evidence_ids": [
+                    item.source_id
+                    for item in evidence
+                ],
+                "evidence_count": len(evidence),
+                "context_strategy": (
+                    capability.spec.context_policy
+                ),
+                "retrieval_mode": (
+                    context_package.retrieval_mode.value
+                ),
+                "context_tokens": (
+                    context_package.total_tokens
+                ),
+                "covered_requirements": (
+                    context_package.covered_requirements
+                ),
+                "missing_requirements": (
+                    context_package.missing_requirements
+                ),
+            },
+        )
+
+        trace.add(
+            "policy.evaluated",
+            policy_decision.model_dump(mode="json"),
+        )
+
+        trace.add(
+            "response.verified",
+            {
+                "schema_valid": True,
+                "citation_count": 0,
+                "unsupported_claim_count": 0,
+            },
+        )
+
+        requirement_count = (
+            len(context_package.covered_requirements)
+            + len(context_package.missing_requirements)
+        )
+
+        coverage_score = (
+            len(context_package.covered_requirements)
+            / requirement_count
+            if requirement_count
+            else 0.0
+        )
+
+        evaluation = EvaluationResult(
+            schema_valid=True,
+            groundedness_score=1.0,
+            evidence_coverage_score=round(
+                coverage_score,
+                6,
             ),
-        ]
+            policy_compliant=True,
+            decision="REVIEW",
+        )
+
+        trace.add(
+            "evaluation.completed",
+            evaluation.model_dump(mode="json"),
+        )
+
+        trace.add(
+            "response.returned",
+            {
+                "analysis_id": analysis_id,
+                "status": (
+                    AnalysisStatus.COMPLETED.value
+                ),
+                "decision": (
+                    "RETURN_INSUFFICIENT_EVIDENCE"
+                ),
+            },
+        )
+
+        trace.add(
+            "evidence.bundle.created",
+            {
+                "analysis_id": analysis_id,
+                "trace_id": trace_id,
+                "context_package_id": (
+                    context_package.package_id
+                ),
+            },
+        )
+
+        trace_record = trace.build()
+
+        result = AnalysisResult(
+            analysis_id=analysis_id,
+            trace_id=trace_id,
+            status=AnalysisStatus.COMPLETED,
+            capability_id=request.capability_id,
+            tenant_id=request.tenant_id,
+            workspace_id=request.workspace_id,
+            user_id=request.user_id,
+            query=request.query,
+            summary=(
+                "The analysis was not executed because the "
+                "governed context engine could not retrieve "
+                "sufficient authorized evidence. "
+                + " ".join(reasons)
+            ),
+            findings=[],
+            evidence=evidence,
+            policy_decision=policy_decision,
+            evaluation=evaluation,
+            runtime=RuntimeMetadata(
+                execution_mode=(
+                    "deterministic-simulation"
+                ),
+                context_strategy=(
+                    capability.spec.context_policy
+                ),
+                tool_calls=0,
+                trace_event_count=trace.event_count,
+                context_package_id=(
+                    context_package.package_id
+                ),
+                retrieval_mode=(
+                    context_package.retrieval_mode.value
+                ),
+                retrieval_candidate_count=(
+                    context_package.candidate_count
+                ),
+                retrieval_selected_count=(
+                    context_package.selected_count
+                ),
+                context_tokens=(
+                    context_package.total_tokens
+                ),
+            ),
+        )
+
+        self.store.save_analysis(result)
+        self.store.save_trace(trace_record)
+
+        self._persist_runtime_evidence(
+            result,
+            trace_record,
+        )
+
+        return result
 
     @staticmethod
     def _build_findings(metrics: dict) -> list[Finding]:
