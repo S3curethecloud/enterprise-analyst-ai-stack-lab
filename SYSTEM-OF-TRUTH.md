@@ -197,7 +197,7 @@ The initial vertical slice is complete when the system can:
 
 ## 14. Current Status
 
-**Current phase:** Phase 0 — Architecture and System-of-Truth Foundation
+**Current phase:** Phase 1 — Contracts and Deterministic Runtime
 
 **Runtime authority:** None
 
@@ -207,4 +207,4 @@ The initial vertical slice is complete when the system can:
 
 **Deployment status:** Not deployed
 
-**Implementation status:** Repository foundation in progress
+**Implementation status:** Deterministic runtime foundation implemented; dynamic capability registration, retrieval, memory, and external model integration remain pending

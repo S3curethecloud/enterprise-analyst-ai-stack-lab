@@ -1,0 +1,27 @@
+{
+  "dataset_id": "customer-churn-snapshot-2026-q2",
+  "tenant_id": "tenant-demo",
+  "period": "2026-Q2",
+  "comparison_period": "2026-Q1",
+  "classification": "synthetic-internal",
+  "metrics": {
+    "churn_rate": {
+      "current_percent": 7.8,
+      "previous_percent": 5.1,
+      "change_percentage_points": 2.7
+    },
+    "support_incidents": {
+      "current_count": 418,
+      "previous_count": 271,
+      "change_percent": 54.2
+    },
+    "weekly_active_usage": {
+      "current_percent": 61.0,
+      "previous_percent": 74.0,
+      "change_percent": -17.6
+    }
+  },
+  "highest_impact_segment": "mid-market",
+  "source_owner": "synthetic-customer-intelligence-team",
+  "authoritative": true
+}

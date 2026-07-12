@@ -103,3 +103,39 @@ ROADMAP.md
 License
 
 This repository is intended for architecture education, engineering demonstration, and portfolio evidence. Production adoption requires organization-specific security, privacy, compliance, reliability, and operational review.
+
+## Local Quick Start
+
+    python3 -m venv .venv
+    source .venv/bin/activate
+    python -m pip install --upgrade pip
+    python -m pip install -r requirements.txt
+    make verify
+    make run
+
+API documentation:
+
+    http://127.0.0.1:8000/docs
+
+Run the HTTP smoke test from a second terminal:
+
+    cd ~/enterprise-analyst-ai-stack-lab
+    source .venv/bin/activate
+    make smoke
+
+## Phase 1 API Endpoints
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | / | Service metadata |
+| GET | /health | Runtime health |
+| POST | /api/v1/analyses | Execute deterministic analysis |
+| GET | /api/v1/analyses/{analysis_id} | Retrieve an analysis |
+| GET | /api/v1/traces/{trace_id} | Retrieve an execution trace |
+
+## Phase 1 Execution Boundary
+
+Phase 1 uses deterministic simulation and synthetic evidence.
+
+It does not call an external model, access production data, invoke write-capable
+tools, or possess production runtime authority.
