@@ -135,6 +135,7 @@ flowchart TB
     end
 ```
 
+```mermaid
 sequenceDiagram
     participant A as Analyst
     participant G as AI Gateway
@@ -165,6 +166,7 @@ sequenceDiagram
     R->>L: Create evidence bundle
     L-->>R: Evidence bundle created
     R-->>A: Evidence-backed response
+```
     
 Core Platform Interfaces
 
