@@ -59,13 +59,17 @@ See ARCHITECTURE.md for the complete reference architecture.
 
 Current Status
 
-Phase: Phase 0 — Architecture Foundation
+Phase: Phase 3 — Governed Retrieval and Context Engine
 
 Data: Synthetic only
 
 Runtime authority: None
 
 Production authority: None
+
+Deployment status: Not deployed
+
+Next phase: Phase 4 — Governed Tools and MCP Interoperability
 
 Repository Structure
 apps/               User-facing APIs and interfaces
@@ -169,3 +173,41 @@ preview-only until their execution profiles are implemented.
 | GET | /api/v1/prompts/{prompt_id}/versions/{version} | Retrieve prompt metadata |
 
 Prompt content is intentionally excluded from the discovery API.
+
+## Phase 3 Governed Retrieval and Context Engine
+
+Phase 3 replaces static runtime context loading with a governed,
+deterministic retrieval and context-construction pipeline.
+
+Implemented controls include:
+
+- Versioned fast, standard, and deep context policies
+- Governed structured and document source adapters
+- Information-requirement planning
+- Tenant, workspace, and classification isolation
+- Source freshness and lifecycle filtering
+- Deterministic ranking and content deduplication
+- Policy-level context token budgets
+- Provenance-rich context packages
+- Explicit insufficient-evidence decisions
+- Tool and model execution prevention when evidence is insufficient
+- Read-only context-policy and source discovery APIs
+- Phase 3 verification and evidence generation
+
+### Context Discovery Endpoints
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | /api/v1/context-policies | List context-policy metadata |
+| GET | /api/v1/context-policies/{policy_id} | Retrieve one context policy |
+| GET | /api/v1/sources | List governed source metadata |
+| GET | /api/v1/sources/{source_id} | Retrieve one governed source |
+
+Source content and local filesystem paths are intentionally excluded
+from the discovery API.
+
+### Phase 3 Authority Boundary
+
+Phase 3 operates only against synthetic local evidence. It has no
+production authority, does not access production data, and does not
+call an external model.

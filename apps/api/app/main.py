@@ -4,6 +4,16 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, status
 
+from apps.api.app.context_api import (
+    build_context_router,
+)
+from apps.api.app.context_engine import (
+    GovernedContextEngine,
+)
+from apps.api.app.context_registry import (
+    ContextPolicyRegistry,
+    SourceCatalog,
+)
 from apps.api.app.contracts import (
     AnalysisRequest,
     AnalysisResult,
@@ -16,11 +26,14 @@ from apps.api.app.registry import (
     validate_registry_bindings,
 )
 from apps.api.app.registry_api import build_registry_router
+from apps.api.app.retrieval_adapters import (
+    SourceDocumentLoader,
+)
 from apps.api.app.runtime import DeterministicAnalystRuntime
 from apps.api.app.store import AnalysisStore
 
 
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.3.0"
 
 app = FastAPI(
     title="Enterprise Analyst AI Stack API",
@@ -45,6 +58,26 @@ validate_registry_bindings(
     prompt_registry,
 )
 
+context_policy_registry = ContextPolicyRegistry(
+    repository_root / "context-policies"
+).load()
+
+source_catalog = SourceCatalog(
+    catalog_path=(
+        repository_root
+        / "data/metadata/sources.yaml"
+    ),
+    repository_root=repository_root,
+).load()
+
+context_engine = GovernedContextEngine(
+    source_catalog=source_catalog,
+    policy_registry=context_policy_registry,
+    source_loader=SourceDocumentLoader(
+        repository_root
+    ),
+)
+
 store = AnalysisStore()
 
 runtime = DeterministicAnalystRuntime(
@@ -52,12 +85,20 @@ runtime = DeterministicAnalystRuntime(
     repository_root=repository_root,
     capability_registry=capability_registry,
     prompt_registry=prompt_registry,
+    context_engine=context_engine,
 )
 
 app.include_router(
     build_registry_router(
         capability_registry=capability_registry,
         prompt_registry=prompt_registry,
+    )
+)
+
+app.include_router(
+    build_context_router(
+        policy_registry=context_policy_registry,
+        source_catalog=source_catalog,
     )
 )
 

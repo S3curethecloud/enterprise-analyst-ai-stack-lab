@@ -1,0 +1,48 @@
+api_version: analyst.securethecloud.dev/v1
+kind: SourceCatalog
+
+sources:
+  - source_id: customer-churn-snapshot-2026-q2
+    tenant_id: tenant-demo
+    workspace_ids:
+      - workspace-customer-intelligence
+    classification: synthetic-internal
+    source_type: structured-data
+    title: Synthetic Customer Churn Snapshot
+    owner: synthetic-customer-intelligence-team
+    path: data/structured/customer_churn_snapshot.json
+    authoritative: true
+    created_at: 2026-07-01T08:00:00Z
+    updated_at: 2026-07-01T08:00:00Z
+    effective_at: 2026-06-30T23:59:59Z
+    expires_at: 2027-07-01T00:00:00Z
+    tags:
+      - customer-churn
+      - q2
+      - customer-metrics
+      - product-usage
+      - support-incidents
+      - mid-market
+    citation_uri: urn:analyst-source:customer-churn-snapshot-2026-q2
+
+  - source_id: q2-support-summary
+    tenant_id: tenant-demo
+    workspace_ids:
+      - workspace-customer-intelligence
+    classification: synthetic-internal
+    source_type: document
+    title: Q2 Synthetic Support Operations Summary
+    owner: synthetic-support-operations
+    path: data/documents/q2-support-summary.md
+    authoritative: true
+    created_at: 2026-07-02T08:00:00Z
+    updated_at: 2026-07-02T08:00:00Z
+    effective_at: 2026-06-30T23:59:59Z
+    expires_at: 2027-07-02T00:00:00Z
+    tags:
+      - support-incidents
+      - workflow-migration
+      - product-usage
+      - mid-market
+      - authentication-failures
+    citation_uri: urn:analyst-source:q2-support-summary

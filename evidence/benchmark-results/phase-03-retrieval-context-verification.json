@@ -1,0 +1,196 @@
+{
+  "phase": "Phase 3",
+  "verification": "PASS",
+  "generated_at": "2026-07-12T21:51:48.400923+00:00",
+  "test_output": "..............................                                           [100%]\n=============================== warnings summary ===============================\n.venv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  /home/cloudlab/enterprise-analyst-ai-stack-lab/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+  "runtime_verification": {
+    "application_version": "0.3.0",
+    "context_policy_count": 3,
+    "source_count": 2,
+    "source_paths_exposed": false,
+    "authorized_request": {
+      "analysis_id": "ana_af62afa8073f43f5",
+      "trace_id": "trc_0df19d2d9bdf4e8d",
+      "status": "COMPLETED",
+      "capability_id": "customer-churn-analysis",
+      "tenant_id": "tenant-demo",
+      "workspace_id": "workspace-customer-intelligence",
+      "user_id": "analyst-001",
+      "query": "Explain why customer churn increased during Q2. Compare support incidents and product usage.",
+      "summary": "Q2 churn increased from 5.1% to 7.8%. The strongest contributing signals were a 54.2% increase in support incidents and a 17.6% reduction in weekly active usage. The evidence indicates the greatest impact occurred in the mid-market segment following the April workflow migration. This conclusion is based exclusively on synthetic demonstration evidence.",
+      "findings": [
+        {
+          "statement": "Customer churn increased by 2.7 percentage points from Q1 to Q2.",
+          "confidence": 1.0,
+          "evidence_ids": [
+            "customer-churn-snapshot-2026-q2",
+            "query-customer-metrics-result"
+          ]
+        },
+        {
+          "statement": "Support incidents increased by 54.2%, creating a strong operational signal associated with the churn increase.",
+          "confidence": 0.98,
+          "evidence_ids": [
+            "customer-churn-snapshot-2026-q2",
+            "q2-support-summary"
+          ]
+        },
+        {
+          "statement": "Weekly active product usage declined by 17.6%, indicating reduced engagement during the same period.",
+          "confidence": 0.98,
+          "evidence_ids": [
+            "customer-churn-snapshot-2026-q2",
+            "q2-support-summary"
+          ]
+        },
+        {
+          "statement": "The highest-impact segment was mid-market, with incident concentration following the workflow migration.",
+          "confidence": 0.94,
+          "evidence_ids": [
+            "customer-churn-snapshot-2026-q2",
+            "q2-support-summary"
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "source_id": "q2-support-summary",
+          "source_type": "document",
+          "title": "Q2 Synthetic Support Operations Summary",
+          "excerpt": "# Q2 Synthetic Support Operations Summary Classification: synthetic-internal Tenant: tenant-demo Owner: synthetic-support-operations During the second quarter, support incidents increased most sharply among mid-market accounts following the April product workflow migration. The largest incident categories were authentication failures, delayed data synchronization, and reporting timeouts. Accounts experiencing two or more support incidents showed lower weekly product usage during the same period.",
+          "relevance_score": 0.665592,
+          "tenant_id": "tenant-demo",
+          "classification": "synthetic-internal",
+          "authoritative": true,
+          "updated_at": "2026-07-02T08:00:00Z",
+          "content_hash": "dab4441a8d0123cca5e233176134e943c3ad769f0ac696694e46c44e7f4b9ce3",
+          "citation_uri": "urn:analyst-source:q2-support-summary",
+          "matched_requirements": [
+            "churn-change",
+            "support-signal",
+            "usage-signal"
+          ]
+        },
+        {
+          "source_id": "customer-churn-snapshot-2026-q2",
+          "source_type": "structured-data",
+          "title": "Synthetic Customer Churn Snapshot",
+          "excerpt": "dataset id: customer-churn-snapshot-2026-q2 tenant id: tenant-demo period: 2026-Q2 comparison period: 2026-Q1 classification: synthetic-internal metrics churn rate current percent: 7.8 metrics churn rate previous percent: 5.1 metrics churn rate change percentage points: 2.7 metrics support incidents current count: 418 metrics support incidents previous count: 271 metrics support incidents change percent: 54.2 metrics weekly active usage current percent: 61.0 metrics weekly active usage previous ",
+          "relevance_score": 0.665387,
+          "tenant_id": "tenant-demo",
+          "classification": "synthetic-internal",
+          "authoritative": true,
+          "updated_at": "2026-07-01T08:00:00Z",
+          "content_hash": "de99fb086e5a948890f0e968f3ede5c612cf7093cd2a38fe581c74c06826be9c",
+          "citation_uri": "urn:analyst-source:customer-churn-snapshot-2026-q2",
+          "matched_requirements": [
+            "churn-change",
+            "support-signal",
+            "usage-signal"
+          ]
+        },
+        {
+          "source_id": "query-customer-metrics-result",
+          "source_type": "tool-result",
+          "title": "Customer Metrics Tool Result",
+          "excerpt": "Q2 churn was 7.8%, up 2.7 percentage points. Support incidents increased 54.2%, while weekly active usage changed -17.6%.",
+          "relevance_score": 1.0,
+          "tenant_id": "tenant-demo",
+          "classification": "synthetic-internal",
+          "authoritative": true,
+          "updated_at": "2026-07-01T08:00:00Z",
+          "content_hash": "de99fb086e5a948890f0e968f3ede5c612cf7093cd2a38fe581c74c06826be9c",
+          "citation_uri": "urn:analyst-tool-result:query-customer-metrics",
+          "matched_requirements": [
+            "churn-change",
+            "support-signal",
+            "usage-signal"
+          ]
+        }
+      ],
+      "policy_decision": {
+        "decision": "ALLOW",
+        "policy_id": "phase-03-governed-retrieval-read-only-tool-policy",
+        "reasons": [
+          "The governed context engine returned sufficient authorized evidence.",
+          "Selected sources match the request tenant, workspace, and allowed classifications.",
+          "The requested tool is read-only.",
+          "The required tool is present in the capability allowlist."
+        ]
+      },
+      "evaluation": {
+        "schema_valid": true,
+        "groundedness_score": 1.0,
+        "evidence_coverage_score": 1.0,
+        "policy_compliant": true,
+        "decision": "PASS"
+      },
+      "runtime": {
+        "execution_mode": "deterministic-simulation",
+        "context_strategy": "churn-standard-v1",
+        "tool_calls": 1,
+        "trace_event_count": 14,
+        "context_package_id": "ctx_a5b6224093de4af4",
+        "retrieval_mode": "standard",
+        "retrieval_candidate_count": 2,
+        "retrieval_selected_count": 2,
+        "context_tokens": 327
+      },
+      "created_at": "2026-07-12T21:51:48.397302Z"
+    },
+    "cross_tenant_request": {
+      "analysis_id": "ana_5dd020bc62c44c6e",
+      "trace_id": "trc_371e5dd6a0a441d4",
+      "status": "COMPLETED",
+      "capability_id": "customer-churn-analysis",
+      "tenant_id": "tenant-other",
+      "workspace_id": "workspace-customer-intelligence",
+      "user_id": "analyst-001",
+      "query": "Explain why customer churn increased during Q2. Compare support incidents and product usage.",
+      "summary": "The analysis was not executed because the governed context engine could not retrieve sufficient authorized evidence. The selected evidence count is below the policy minimum of 2. The retrieved context does not cover all information requirements. The policy requires at least one authoritative source.",
+      "findings": [],
+      "evidence": [],
+      "policy_decision": {
+        "decision": "RETURN_INSUFFICIENT_EVIDENCE",
+        "policy_id": "churn-standard-v1",
+        "reasons": [
+          "The selected evidence count is below the policy minimum of 2.",
+          "The retrieved context does not cover all information requirements.",
+          "The policy requires at least one authoritative source."
+        ]
+      },
+      "evaluation": {
+        "schema_valid": true,
+        "groundedness_score": 1.0,
+        "evidence_coverage_score": 0.0,
+        "policy_compliant": true,
+        "decision": "REVIEW"
+      },
+      "runtime": {
+        "execution_mode": "deterministic-simulation",
+        "context_strategy": "churn-standard-v1",
+        "tool_calls": 0,
+        "trace_event_count": 11,
+        "context_package_id": "ctx_39882481f7c04551",
+        "retrieval_mode": "standard",
+        "retrieval_candidate_count": 0,
+        "retrieval_selected_count": 0,
+        "context_tokens": 0
+      },
+      "created_at": "2026-07-12T21:51:48.398842Z"
+    },
+    "cross_tenant_trace_events": [
+      "capability.selected",
+      "context.compiled",
+      "context.plan.created",
+      "evaluation.completed",
+      "evidence.bundle.created",
+      "identity.resolved",
+      "policy.evaluated",
+      "request.received",
+      "response.returned",
+      "response.verified",
+      "retrieval.executed"
+    ]
+  }
+}
