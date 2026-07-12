@@ -1,0 +1,257 @@
+{
+  "phase": "Phase 1",
+  "verification": "PASS",
+  "generated_at": "2026-07-12T18:52:57.169627+00:00",
+  "test_output": "......                                                                   [100%]\n=============================== warnings summary ===============================\n.venv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  /home/cloudlab/enterprise-analyst-ai-stack-lab/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\ntests/integration/test_api.py::test_unsupported_capability_returns_422\n  /home/cloudlab/enterprise-analyst-ai-stack-lab/.venv/lib/python3.12/site-packages/fastapi/routing.py:344: StarletteDeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.\n    return await dependant.call(**values)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+  "api_verification": {
+    "health": {
+      "status": "healthy",
+      "service": "analyst-runtime-api",
+      "version": "0.1.0",
+      "execution_mode": "deterministic-simulation"
+    },
+    "analysis": {
+      "analysis_id": "ana_8d16b3a51e3940c6",
+      "trace_id": "trc_4d6f0a9d06134898",
+      "status": "COMPLETED",
+      "capability_id": "customer-churn-analysis",
+      "tenant_id": "tenant-demo",
+      "workspace_id": "workspace-customer-intelligence",
+      "user_id": "analyst-001",
+      "query": "Explain why customer churn increased during Q2. Compare support incidents and product usage, then provide an evidence-backed executive summary.",
+      "summary": "Q2 churn increased from 5.1% to 7.8%. The strongest contributing signals were a 54.2% increase in support incidents and a 17.6% reduction in weekly active usage. The evidence indicates the greatest impact occurred in the mid-market segment following the April workflow migration. This conclusion is based exclusively on synthetic demonstration evidence.",
+      "findings": [
+        {
+          "statement": "Customer churn increased by 2.7 percentage points from Q1 to Q2.",
+          "confidence": 1.0,
+          "evidence_ids": [
+            "customer-churn-snapshot-2026-q2",
+            "query-customer-metrics-result"
+          ]
+        },
+        {
+          "statement": "Support incidents increased by 54.2%, creating a strong operational signal associated with the churn increase.",
+          "confidence": 0.98,
+          "evidence_ids": [
+            "customer-churn-snapshot-2026-q2",
+            "q2-support-summary"
+          ]
+        },
+        {
+          "statement": "Weekly active product usage declined by 17.6%, indicating reduced engagement during the same period.",
+          "confidence": 0.98,
+          "evidence_ids": [
+            "customer-churn-snapshot-2026-q2",
+            "q2-support-summary"
+          ]
+        },
+        {
+          "statement": "The highest-impact segment was mid-market, with incident concentration following the workflow migration.",
+          "confidence": 0.94,
+          "evidence_ids": [
+            "customer-churn-snapshot-2026-q2",
+            "q2-support-summary"
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "source_id": "customer-churn-snapshot-2026-q2",
+          "source_type": "structured-data",
+          "title": "Synthetic Customer Churn Snapshot",
+          "excerpt": "Q2 churn was 7.8%, up 2.7 percentage points. Support incidents increased 54.2%, while weekly active usage changed -17.6%.",
+          "relevance_score": 1.0
+        },
+        {
+          "source_id": "q2-support-summary",
+          "source_type": "document",
+          "title": "Q2 Synthetic Support Operations Summary",
+          "excerpt": "# Q2 Synthetic Support Operations Summary Classification: synthetic-internal Tenant: tenant-demo Owner: synthetic-support-operations During the second quarter, support incidents increased most sharply among mid-market accounts following the April product workflow migration. The largest incident categories were authentication failures, delayed data synchronization, and reporting timeouts. Accounts experiencing two or more support incidents showed lower weekly product usage during the same period.",
+          "relevance_score": 0.96
+        },
+        {
+          "source_id": "query-customer-metrics-result",
+          "source_type": "tool-result",
+          "title": "Customer Metrics Tool Result",
+          "excerpt": "Q2 churn was 7.8%, up 2.7 percentage points. Support incidents increased 54.2%, while weekly active usage changed -17.6%.",
+          "relevance_score": 1.0
+        }
+      ],
+      "policy_decision": {
+        "decision": "ALLOW",
+        "policy_id": "phase-01-read-only-demo-policy",
+        "reasons": [
+          "The request uses synthetic demonstration data.",
+          "The requested tool is read-only.",
+          "The tenant identifier matches the authorized demonstration tenant."
+        ]
+      },
+      "evaluation": {
+        "schema_valid": true,
+        "groundedness_score": 1.0,
+        "evidence_coverage_score": 1.0,
+        "policy_compliant": true,
+        "decision": "PASS"
+      },
+      "runtime": {
+        "execution_mode": "deterministic-simulation",
+        "context_strategy": "phase-01-static-authorized-context",
+        "tool_calls": 1,
+        "trace_event_count": 14
+      },
+      "created_at": "2026-07-12T18:52:57.164688Z"
+    },
+    "trace": {
+      "trace_id": "trc_4d6f0a9d06134898",
+      "events": [
+        {
+          "sequence": 1,
+          "event_type": "request.received",
+          "timestamp": "2026-07-12T18:52:57.164396Z",
+          "details": {
+            "analysis_id": "ana_8d16b3a51e3940c6",
+            "capability_id": "customer-churn-analysis"
+          }
+        },
+        {
+          "sequence": 2,
+          "event_type": "identity.resolved",
+          "timestamp": "2026-07-12T18:52:57.164411Z",
+          "details": {
+            "tenant_id": "tenant-demo",
+            "workspace_id": "workspace-customer-intelligence",
+            "user_id": "analyst-001"
+          }
+        },
+        {
+          "sequence": 3,
+          "event_type": "capability.selected",
+          "timestamp": "2026-07-12T18:52:57.164414Z",
+          "details": {
+            "capability_id": "customer-churn-analysis",
+            "capability_version": "phase-01-deterministic"
+          }
+        },
+        {
+          "sequence": 4,
+          "event_type": "context.plan.created",
+          "timestamp": "2026-07-12T18:52:57.164417Z",
+          "details": {
+            "strategy": "phase-01-static-authorized-context",
+            "required_sources": [
+              "customer-churn-snapshot",
+              "q2-support-summary"
+            ]
+          }
+        },
+        {
+          "sequence": 5,
+          "event_type": "retrieval.executed",
+          "timestamp": "2026-07-12T18:52:57.164565Z",
+          "details": {
+            "retrieved_source_ids": [
+              "customer-churn-snapshot-2026-q2",
+              "q2-support-summary"
+            ],
+            "source_count": 2
+          }
+        },
+        {
+          "sequence": 6,
+          "event_type": "tool.requested",
+          "timestamp": "2026-07-12T18:52:57.164569Z",
+          "details": {
+            "tool_name": "query_customer_metrics",
+            "side_effect": "none"
+          }
+        },
+        {
+          "sequence": 7,
+          "event_type": "policy.evaluated",
+          "timestamp": "2026-07-12T18:52:57.164591Z",
+          "details": {
+            "decision": "ALLOW",
+            "policy_id": "phase-01-read-only-demo-policy",
+            "reasons": [
+              "The request uses synthetic demonstration data.",
+              "The requested tool is read-only.",
+              "The tenant identifier matches the authorized demonstration tenant."
+            ]
+          }
+        },
+        {
+          "sequence": 8,
+          "event_type": "tool.executed",
+          "timestamp": "2026-07-12T18:52:57.164594Z",
+          "details": {
+            "tool_name": "query_customer_metrics",
+            "result_dataset_id": "customer-churn-snapshot-2026-q2",
+            "status": "success"
+          }
+        },
+        {
+          "sequence": 9,
+          "event_type": "context.compiled",
+          "timestamp": "2026-07-12T18:52:57.164626Z",
+          "details": {
+            "evidence_ids": [
+              "customer-churn-snapshot-2026-q2",
+              "q2-support-summary",
+              "query-customer-metrics-result"
+            ],
+            "evidence_count": 3,
+            "context_strategy": "phase-01-static-authorized-context"
+          }
+        },
+        {
+          "sequence": 10,
+          "event_type": "model.simulated",
+          "timestamp": "2026-07-12T18:52:57.164628Z",
+          "details": {
+            "execution_mode": "deterministic-simulation",
+            "external_model_called": false
+          }
+        },
+        {
+          "sequence": 11,
+          "event_type": "response.verified",
+          "timestamp": "2026-07-12T18:52:57.164649Z",
+          "details": {
+            "schema_valid": true,
+            "citation_count": 8
+          }
+        },
+        {
+          "sequence": 12,
+          "event_type": "evaluation.completed",
+          "timestamp": "2026-07-12T18:52:57.164662Z",
+          "details": {
+            "schema_valid": true,
+            "groundedness_score": 1.0,
+            "evidence_coverage_score": 1.0,
+            "policy_compliant": true,
+            "decision": "PASS"
+          }
+        },
+        {
+          "sequence": 13,
+          "event_type": "response.returned",
+          "timestamp": "2026-07-12T18:52:57.164667Z",
+          "details": {
+            "analysis_id": "ana_8d16b3a51e3940c6",
+            "status": "COMPLETED"
+          }
+        },
+        {
+          "sequence": 14,
+          "event_type": "evidence.bundle.created",
+          "timestamp": "2026-07-12T18:52:57.164669Z",
+          "details": {
+            "analysis_id": "ana_8d16b3a51e3940c6",
+            "trace_id": "trc_4d6f0a9d06134898"
+          }
+        }
+      ]
+    }
+  }
+}
