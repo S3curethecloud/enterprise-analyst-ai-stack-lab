@@ -8,7 +8,6 @@ The system separates product-specific analytical capabilities from the shared AI
 
 ## Logical Architecture
 
-```mermaid
 flowchart TB
     U[Analyst or Product Application]
 
@@ -103,9 +102,9 @@ flowchart TB
     CAPREG --> CLASSIFY
     CLASSIFY --> PLAN
     PLAN --> GRAPH
-    GRAPH --> Context
-    GRAPH --> Tools
-    GRAPH --> Memory
+    GRAPH --> RETRIEVE
+    GRAPH --> TOOLPOLICY
+    GRAPH --> THREAD
 
     RETRIEVE --> DOCS
     RETRIEVE --> VECTOR
@@ -119,14 +118,21 @@ flowchart TB
     VERIFY --> EVAL
     VERIFY --> REVIEW
 
-    Runtime --> TRACE
-    Context --> TRACE
-    Tools --> TRACE
-    Memory --> TRACE
+    CLASSIFY --> TRACE
+    RETRIEVE --> TRACE
+    TOOLPOLICY --> TRACE
+    THREAD --> TRACE
     POLICY --> LEDGER
     EVAL --> LEDGER
     TRACE --> LEDGER
-Primary Runtime Flow
+
+    subgraph Legend["Primary Runtime Flow"]
+        direction LR
+        A[Analyst] --> G[AI Gateway] --> C[Capability Registry] --> R[Analyst Runtime]
+        R --> X[Context Engine] --> P[Policy Engine] --> T[Tool Gateway]
+        T --> E[Evaluation Service] --> L[Evidence Service]
+    end
+
 sequenceDiagram
     participant A as Analyst
     participant G as AI Gateway
@@ -155,7 +161,9 @@ sequenceDiagram
     R->>E: Evaluate result and trace
     E-->>R: Evaluation scores
     R->>L: Create evidence bundle
+    L-->>R: Evidence bundle created
     R-->>A: Evidence-backed response
+    
 Core Platform Interfaces
 
 The runtime will depend on stable interfaces rather than provider-specific SDKs.
