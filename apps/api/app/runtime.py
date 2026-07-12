@@ -15,11 +15,14 @@ from apps.api.app.contracts import (
     RuntimeMetadata,
     TraceRecord,
 )
+from apps.api.app.registry import (
+    CapabilityRegistry,
+    PromptRegistry,
+    RegistryItemNotFoundError,
+    validate_registry_bindings,
+)
 from apps.api.app.store import AnalysisStore
 from apps.api.app.tracing import TraceRecorder
-
-
-SUPPORTED_CAPABILITY = "customer-churn-analysis"
 
 
 class DeterministicAnalystRuntime:
@@ -27,15 +30,83 @@ class DeterministicAnalystRuntime:
         self,
         store: AnalysisStore,
         repository_root: Path | None = None,
+        capability_registry: CapabilityRegistry | None = None,
+        prompt_registry: PromptRegistry | None = None,
     ) -> None:
         self.store = store
-        self.repository_root = repository_root or Path(__file__).resolve().parents[3]
+        self.repository_root = (
+            repository_root
+            or Path(__file__).resolve().parents[3]
+        )
+
+        self.capability_registry = (
+            capability_registry
+            or CapabilityRegistry(
+                self.repository_root / "capabilities"
+            ).load()
+        )
+
+        self.prompt_registry = (
+            prompt_registry
+            or PromptRegistry(
+                self.repository_root / "prompts"
+            ).load()
+        )
+
+        validate_registry_bindings(
+            self.capability_registry,
+            self.prompt_registry,
+        )
 
     async def execute(self, request: AnalysisRequest) -> AnalysisResult:
-        if request.capability_id != SUPPORTED_CAPABILITY:
+        try:
+            capability = self.capability_registry.get(
+                request.capability_id
+            )
+        except RegistryItemNotFoundError as exc:
+            raise ValueError(str(exc)) from exc
+
+        if capability.metadata.status != "active":
             raise ValueError(
-                f"Unsupported capability_id: {request.capability_id}. "
-                f"Supported capability: {SUPPORTED_CAPABILITY}."
+                "Capability is not active: "
+                f"{capability.metadata.id} "
+                f"[{capability.metadata.status}]"
+            )
+
+        execution_profile = (
+            capability.spec.runtime.execution_profile
+        )
+
+        if execution_profile != "churn-synthesis-v1":
+            raise ValueError(
+                "Execution profile is not implemented: "
+                f"{execution_profile}"
+            )
+
+        prompt_bundle = capability.spec.prompt_bundle
+
+        prompt_references = {
+            "system": prompt_bundle.system,
+            "task": prompt_bundle.task,
+            "verifier": prompt_bundle.verifier,
+        }
+
+        prompt_versions: dict[str, str] = {}
+
+        for role, reference in prompt_references.items():
+            self.prompt_registry.get(
+                prompt_id=reference.prompt_id,
+                version=reference.version,
+            )
+            prompt_versions[role] = (
+                f"{reference.prompt_id}@{reference.version}"
+            )
+
+        tool_name = "query_customer_metrics"
+
+        if tool_name not in capability.spec.allowed_tools:
+            raise ValueError(
+                f"Required tool is not allowed: {tool_name}"
             )
 
         analysis_id = f"ana_{uuid4().hex[:16]}"
@@ -62,15 +133,17 @@ class DeterministicAnalystRuntime:
         trace.add(
             "capability.selected",
             {
-                "capability_id": request.capability_id,
-                "capability_version": "phase-01-deterministic",
+                "capability_id": capability.metadata.id,
+                "capability_version": capability.metadata.version,
+                "execution_profile": execution_profile,
+                "prompt_versions": prompt_versions,
             },
         )
 
         trace.add(
             "context.plan.created",
             {
-                "strategy": "phase-01-static-authorized-context",
+                "strategy": capability.spec.context_policy,
                 "required_sources": [
                     "customer-churn-snapshot",
                     "q2-support-summary",
@@ -95,7 +168,7 @@ class DeterministicAnalystRuntime:
         trace.add(
             "tool.requested",
             {
-                "tool_name": "query_customer_metrics",
+                "tool_name": tool_name,
                 "side_effect": "none",
             },
         )
@@ -118,7 +191,7 @@ class DeterministicAnalystRuntime:
         trace.add(
             "tool.executed",
             {
-                "tool_name": "query_customer_metrics",
+                "tool_name": tool_name,
                 "result_dataset_id": metrics["dataset_id"],
                 "status": "success",
             },
@@ -201,7 +274,7 @@ class DeterministicAnalystRuntime:
             evaluation=evaluation,
             runtime=RuntimeMetadata(
                 execution_mode="deterministic-simulation",
-                context_strategy="phase-01-static-authorized-context",
+                context_strategy=capability.spec.context_policy,
                 tool_calls=1,
                 trace_event_count=trace.event_count,
             ),

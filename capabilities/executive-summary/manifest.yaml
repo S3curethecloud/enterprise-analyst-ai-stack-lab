@@ -1,0 +1,46 @@
+api_version: analyst.securethecloud.dev/v1
+kind: AnalystCapability
+
+metadata:
+  id: executive-summary
+  version: 1.0.0
+  owner: analyst-platform-team
+  description: Produce a concise executive summary from approved analytical findings.
+  status: preview
+
+spec:
+  task_types:
+    - executive_summary
+    - leadership_brief
+
+  prompt_bundle:
+    system:
+      prompt_id: analyst-core
+      version: v1
+    task:
+      prompt_id: executive-summary
+      version: v1
+    verifier:
+      prompt_id: evidence-verifier
+      version: v1
+
+  allowed_tools: []
+
+  context_policy: approved-findings-only-v1
+  memory_policy: no-durable-write-v1
+  evaluation_suite: executive-summary-v1
+  output_schema: schemas/executive-summary-result-v1.json
+
+  runtime:
+    execution_profile: executive-summary-v1
+    maximum_tool_calls: 0
+    maximum_context_tokens: 6000
+    timeout_seconds: 30
+
+  risk:
+    classification: low
+    data_classes:
+      - synthetic-internal
+      - approved-analytical-output
+    approval_required_for:
+      - external_distribution

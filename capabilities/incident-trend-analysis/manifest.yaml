@@ -1,0 +1,48 @@
+api_version: analyst.securethecloud.dev/v1
+kind: AnalystCapability
+
+metadata:
+  id: incident-trend-analysis
+  version: 1.0.0
+  owner: service-operations-team
+  description: Analyze operational incident patterns using approved incident and service metadata.
+  status: preview
+
+spec:
+  task_types:
+    - incident_trend_analysis
+    - operational_pattern_analysis
+
+  prompt_bundle:
+    system:
+      prompt_id: analyst-core
+      version: v1
+    task:
+      prompt_id: incident-trend-analysis
+      version: v1
+    verifier:
+      prompt_id: evidence-verifier
+      version: v1
+
+  allowed_tools:
+    - retrieve_support_incidents
+    - calculate_period_change
+
+  context_policy: incident-standard-v1
+  memory_policy: workspace-isolated-v1
+  evaluation_suite: incident-trend-analysis-v1
+  output_schema: schemas/incident-trend-result-v1.json
+
+  runtime:
+    execution_profile: incident-trend-v1
+    maximum_tool_calls: 6
+    maximum_context_tokens: 10000
+    timeout_seconds: 40
+
+  risk:
+    classification: moderate
+    data_classes:
+      - synthetic-internal
+      - operational-confidential
+    approval_required_for:
+      - external_distribution

@@ -1,0 +1,9 @@
+api_version: analyst.securethecloud.dev/v1
+kind: PromptArtifact
+prompt_id: churn-analysis
+version: v1
+role: task
+owner: customer-intelligence-team
+description: Instructions for evidence-backed customer churn analysis.
+status: active
+content_file: v1.md

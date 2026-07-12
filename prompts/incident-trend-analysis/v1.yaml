@@ -1,0 +1,9 @@
+api_version: analyst.securethecloud.dev/v1
+kind: PromptArtifact
+prompt_id: incident-trend-analysis
+version: v1
+role: task
+owner: service-operations-team
+description: Instructions for identifying patterns in operational incidents.
+status: active
+content_file: v1.md

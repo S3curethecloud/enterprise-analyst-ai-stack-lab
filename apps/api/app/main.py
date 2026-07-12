@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, status
 
 from apps.api.app.contracts import (
@@ -8,11 +10,17 @@ from apps.api.app.contracts import (
     HealthResponse,
     TraceRecord,
 )
+from apps.api.app.registry import (
+    CapabilityRegistry,
+    PromptRegistry,
+    validate_registry_bindings,
+)
+from apps.api.app.registry_api import build_registry_router
 from apps.api.app.runtime import DeterministicAnalystRuntime
 from apps.api.app.store import AnalysisStore
 
 
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.2.0"
 
 app = FastAPI(
     title="Enterprise Analyst AI Stack API",
@@ -22,8 +30,36 @@ app = FastAPI(
     ),
 )
 
+repository_root = Path(__file__).resolve().parents[3]
+
+capability_registry = CapabilityRegistry(
+    repository_root / "capabilities"
+).load()
+
+prompt_registry = PromptRegistry(
+    repository_root / "prompts"
+).load()
+
+validate_registry_bindings(
+    capability_registry,
+    prompt_registry,
+)
+
 store = AnalysisStore()
-runtime = DeterministicAnalystRuntime(store=store)
+
+runtime = DeterministicAnalystRuntime(
+    store=store,
+    repository_root=repository_root,
+    capability_registry=capability_registry,
+    prompt_registry=prompt_registry,
+)
+
+app.include_router(
+    build_registry_router(
+        capability_registry=capability_registry,
+        prompt_registry=prompt_registry,
+    )
+)
 
 
 @app.get("/")
@@ -57,7 +93,7 @@ async def create_analysis(request: AnalysisRequest) -> AnalysisResult:
         return await runtime.execute(request)
     except ValueError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(exc),
         ) from exc
 

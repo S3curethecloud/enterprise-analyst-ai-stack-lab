@@ -1,0 +1,9 @@
+api_version: analyst.securethecloud.dev/v1
+kind: PromptArtifact
+prompt_id: analyst-core
+version: v1
+role: system
+owner: analyst-platform-team
+description: Core operating instructions for governed enterprise analysis.
+status: active
+content_file: v1.md

@@ -70,6 +70,20 @@ def test_create_and_retrieve_analysis_and_trace() -> None:
     assert "evaluation.completed" in event_types
     assert "evidence.bundle.created" in event_types
 
+    capability_event = next(
+        event
+        for event in trace_response.json()["events"]
+        if event["event_type"] == "capability.selected"
+    )
+
+    assert capability_event["details"]["capability_version"] == "1.0.0"
+    assert capability_event["details"]["execution_profile"] == "churn-synthesis-v1"
+    assert capability_event["details"]["prompt_versions"] == {
+        "system": "analyst-core@v1",
+        "task": "churn-analysis@v1",
+        "verifier": "evidence-verifier@v1",
+    }
+
 
 def test_unknown_resources_return_404() -> None:
     analysis_response = client.get("/api/v1/analyses/ana_missing")
@@ -89,4 +103,94 @@ def test_unsupported_capability_returns_422() -> None:
     )
 
     assert response.status_code == 422
-    assert "Unsupported capability_id" in response.json()["detail"]
+    assert "Capability not found" in response.json()["detail"]
+
+
+def test_registry_discovery_endpoints() -> None:
+    capabilities_response = client.get("/api/v1/capabilities")
+    prompts_response = client.get("/api/v1/prompts")
+
+    assert capabilities_response.status_code == 200
+    assert prompts_response.status_code == 200
+
+    capabilities = capabilities_response.json()
+    prompts = prompts_response.json()
+
+    assert len(capabilities) == 3
+    assert len(prompts) == 5
+
+    capability_statuses = {
+        item["metadata"]["id"]: item["metadata"]["status"]
+        for item in capabilities
+    }
+
+    assert capability_statuses == {
+        "customer-churn-analysis": "active",
+        "executive-summary": "preview",
+        "incident-trend-analysis": "preview",
+    }
+
+    prompt_keys = {
+        f"{item['prompt_id']}@{item['version']}"
+        for item in prompts
+    }
+
+    assert prompt_keys == {
+        "analyst-core@v1",
+        "churn-analysis@v1",
+        "evidence-verifier@v1",
+        "executive-summary@v1",
+        "incident-trend-analysis@v1",
+    }
+
+
+def test_registry_detail_endpoints() -> None:
+    capability_response = client.get(
+        "/api/v1/capabilities/customer-churn-analysis"
+    )
+
+    prompt_response = client.get(
+        "/api/v1/prompts/churn-analysis/versions/v1"
+    )
+
+    assert capability_response.status_code == 200
+    assert prompt_response.status_code == 200
+
+    capability = capability_response.json()
+    prompt = prompt_response.json()
+
+    assert capability["metadata"]["version"] == "1.0.0"
+    assert capability["spec"]["runtime"]["execution_profile"] == (
+        "churn-synthesis-v1"
+    )
+
+    assert prompt["prompt_id"] == "churn-analysis"
+    assert prompt["role"] == "task"
+    assert "content" not in prompt
+
+
+def test_registry_missing_items_return_404() -> None:
+    capability_response = client.get(
+        "/api/v1/capabilities/missing-capability"
+    )
+
+    prompt_response = client.get(
+        "/api/v1/prompts/missing-prompt/versions/v1"
+    )
+
+    assert capability_response.status_code == 404
+    assert prompt_response.status_code == 404
+
+
+def test_preview_capability_cannot_execute() -> None:
+    payload = analysis_payload()
+    payload["capability_id"] = "executive-summary"
+
+    response = client.post(
+        "/api/v1/analyses",
+        json=payload,
+    )
+
+    assert response.status_code == 422
+    assert "Capability is not active" in response.json()["detail"]
+

@@ -139,3 +139,33 @@ Phase 1 uses deterministic simulation and synthetic evidence.
 
 It does not call an external model, access production data, invoke write-capable
 tools, or possess production runtime authority.
+
+## Phase 2 Capability Architecture
+
+Phase 2 replaces hard-coded capability selection with validated,
+versioned capability and prompt registries.
+
+The repository currently contains:
+
+- Three capability manifests
+- Five versioned prompt artifacts
+- Capability-to-prompt binding validation
+- Capability lifecycle enforcement
+- Registry discovery APIs
+- Registry-driven runtime resolution
+- Prompt-version trace evidence
+
+Only `customer-churn-analysis` is active. The
+`incident-trend-analysis` and `executive-summary` capabilities remain
+preview-only until their execution profiles are implemented.
+
+### Registry Endpoints
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | /api/v1/capabilities | List capability manifests |
+| GET | /api/v1/capabilities/{capability_id} | Retrieve one capability |
+| GET | /api/v1/prompts | List prompt metadata |
+| GET | /api/v1/prompts/{prompt_id}/versions/{version} | Retrieve prompt metadata |
+
+Prompt content is intentionally excluded from the discovery API.
